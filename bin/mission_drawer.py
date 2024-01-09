@@ -1,4 +1,5 @@
 from dataclasses import dataclass
+from pathlib import Path
 
 import plotly.graph_objects as go
 from plotly.subplots import SubplotXY, make_subplots
@@ -190,3 +191,16 @@ class MissionProfile:
             title_text="Mission Profile",
         )
         fig.show()
+        # fig.write_image(Path(Path.home(), "Downloads", "mission_profile.svg"))
+
+
+"""
+
+
+from bin.ha_helper import get_phase_info
+from bin.mission_drawer import MissionProfile as MP
+mp = MP(get_phase_info())
+mp.plot()
+
+
+"""
