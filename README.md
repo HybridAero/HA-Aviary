@@ -1,4 +1,120 @@
-# Aviary -- NASA's aircraft design tool
+# HAviary -- HybridAero's version of NASA's aircraft design tool
+
+## Usage
+Note that `Aviary` very much appears geared for Linux, but seems to just about work on Windows
+
+### Build a mission
+Only required if you wish to specify a new mission, otherwise use an example one.  
+```
+aviary draw_mission
+```
+Opens a GUI that lets you click some points to build an Altitude/Mach vs time plot for the mission.
+Also lets you select which segments can be optimised for Mach/Altitude.
+The file will be saved to `outputted_phase_info.py` in your current working directory, so move this to the appropriate simulation directory once it's finished.  
+Note that you might need to `ctrl-C` to get it to close properly. (if `ctrl-C` doesn't work, try `ctrl-Break` (which on a Logitech keyboard is `ctrl-fn-b`))
+
+The mission drawer will solve for the expected range given the time specified at each altitude/Mach.  
+Aviary's main optimisation strategy is to alter the duration of each segment such that the total mission range is achieved.
+
+Further to altering the duration, it can optimise for Mach and altitude during each stage. The order of fit can range from linear (order=1) up to cubic (order=3) (or potentially beyond - not yet tested)
+
+
+
+Also note that some 'mission' parameters are also found in the `aircraft.csv` file!
+
+### Level 1 usage
+Optimise the mission altitude/Mach to minimise fuel burn. (The only type of optimisation supported for level 1 usage)
+
+#### Initialisation
+```
+python .\bin\ha_helper.py init <sim_name>
+```
+will create copies of the required `aircraft.csv` and `mission_phase.py` files, which is all you need to define the simulation.  
+You can either edit an existing `mission_phase.py` file, or use the mission builder to create a new file for you ([see below](#build-a-mission)).
+You can also specify the full path to an example aircraft file if you don't want to use the default.
+
+#### Simulating
+``` 
+.\bin\ha_helper.py run <sim_name>
+``` 
+will print the aviary command that you need to copy/paste to execute to run the simulation. (The entry point isn't very friendly for Level 1 use, which is why this just prints the command instead of running it for you...)
+
+### Define an aircraft
+Take a copy of one of NASA's example aircrafts to get started, then modify the values.  
+
+### Run a simulation
+```
+aviary run_mission $aircraft_file --optimizer IPOPT --max_iter 100 --mass_origin GASP --mission_method GASP --phase_info $mission_phases_file -o $output_directory
+```
+
+## Background
+### [Options/Arguments](https://openmdao.github.io/om-Aviary/getting_started/onboarding_level1.html#level-1-run-options)
+Optimisation objective is **always** fuel-burn in level 1  
+Important options:  
+
+- `--phase_info`
+  - This is how to specify the mission _phases_
+    - Requires a path to a `phases.py` file
+      - Broken in the code, if not `None`, then it looks for a file called `outputted_phase_info.py` in the current working directory...
+    - If not specified, it uses `interface/default_phase_info/flops.py` or `interface/default_phase_info/gasp.py` as appropriate
+- `--mission_method`  
+  - Missions can either by run as `simple`, `FLOPS` or `GASP`. 
+  - `simple` is the default and [apparently recommended](https://openmdao.github.io/om-Aviary/examples/simple_mission_example.html#how-to-define-an-aircraft:~:text=We%20strongly%20suggest%20using%20the%20simple%20mission%20method%20as%20it%20is%20the%20most%20robust%20and%20easiest%20to%20use) as the most robust/stable.
+    - It's unfortunate therefore that the 'simple' example they provide doesn't actually work, so we'll use GASP in the meantime
+- `--mass_origin`
+  - `FLOPS` or `GASP`
+- `--outdir`
+  - Where to write the results to (this seems to be ignored at the moment...)
+
+### FLOPS
+`Flight Optimization System` [comprises the following modules](https://openmdao.github.io/om-Aviary/getting_started/tools_that_aviary_uses.html#flops):  
+1. Weights
+  - Statistical/Empirical equations used to predict component weights
+1. Aerodynamics
+  - provides lift/drag polars, or drag polars can be supplied and scaled with variations in wing area/nacelle size
+1. Propulsion data scaling & interpolation
+  - Requires an input engine deck, then scales to desired thrust
+1. Mission Performance
+    - Uses weights/aero/propulsion to do energy-balance calculations.
+    - Can include segments:
+      - Climb
+      - Cruise
+      - Descent
+      - Reserve
+        - Flight to alternative airport or hold
+1. Take-off & Landing
+  - All-engine take-off field length
+  - BFL (inc OEI/aborted take-off)
+  - Landing field length
+    - Approach speed
+1. Program Control
+  - Point design analysis
+  - Parametric design variable sensitivity
+  - Configuration optimisation
+    - Objectives
+      - Min fuel usage
+      - Max range
+      - Min NOx emissions
+    - Input options (apparently)
+      - Design variables for
+        - Aircraft configuration
+        - Performance
+
+### GASP
+`General Aviation Synthesis Program`
+Apparently allows rapid parametric study for preliminary design.  
+From their description:
+- Contains modules representing 'various technical disciplines' integrated into a computational flow which ensures that the interacting effects of design variables are continuously accounted for in the aircraft sizing procedure
+- Useful for 
+  - comparing configurations
+  - assessing performance and economics
+  - performing trade-off and sensitivity studies
+  - assessing the impact of advanced technologies on aircraft performance and economics
+- Supplies a systematic method for investigating requirements/design factors, always measured in terms of overall aircraft performance/economics
+
+
+
+# Nasa's README below:
 
 ## Description
 
